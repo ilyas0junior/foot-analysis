@@ -1,0 +1,7 @@
+playwright
+beautifulsoup4
+lxml
+pandas
+unidecode
+streamlit
+plotly

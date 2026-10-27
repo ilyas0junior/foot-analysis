@@ -1,0 +1,7 @@
+{
+    "mcpServers": {
+      "daily.dev": {
+        "url": "https://api.daily.dev/mcp"
+      }
+    }
+  }

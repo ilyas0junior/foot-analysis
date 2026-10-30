@@ -76,8 +76,8 @@ The scraper clicks through the result pages and saves everything to `data/transf
 ## Roadmap
 
 - [x] Transfermarkt scraper (profile, club, market value, caps)
-- [ ] Data cleaning and validation
-- [ ] Performance stats (appearances, goals, assists, minutes)
+- [x] Data cleaning and validation
+- [x] Performance stats (appearances, goals, assists, minutes)
 - [ ] Streamlit dashboard: filters, KPIs, rankings, scatter plots, player comparison
 - [ ] Automate the search form so the scraper runs without manual steps
 

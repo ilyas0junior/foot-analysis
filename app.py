@@ -9,8 +9,8 @@ import plotly.express as px
 st.set_page_config(page_title="Moroccan Footballers", page_icon="🇲🇦", layout="wide")
 
 
-@st.cache_data   # reads the CSV once and remembers it, so the app stays fast
-def load_data():
+@st.cache_data
+def load_data() -> pd.DataFrame:
     return pd.read_csv("data/players_clean.csv", parse_dates=["Date_of_Birth"])
 
 
@@ -30,7 +30,8 @@ statuses = st.sidebar.multiselect(
     "International status", sorted(df["Intl_Status"].unique()),
     default=sorted(df["Intl_Status"].unique()),
 )
-age_min, age_max = int(df["Age"].min()), int(df["Age"].max())
+age_min = int(df["Age"].to_numpy().min())
+age_max = int(df["Age"].to_numpy().max())
 age_range = st.sidebar.slider("Age", age_min, age_max, (age_min, age_max))
 
 only_dual = st.sidebar.checkbox("Dual nationals only")
@@ -60,18 +61,20 @@ if filtered.empty:
     st.warning("No players match these filters.")
     st.stop()
 
-tab1, tab2, tab3, tab4 = st.tabs(["Top players", "Profile", "Clubs & countries", "Table"])
+tab1, tab2, tab3, tab4 = st.tabs(["Top_players", "Profile", "Clubs & countries", "Table"])
 
 # ---------- Tab 1: most valuable players ----------
 with tab1:
-    top = filtered.nlargest(10, "Market_Value_M").sort_values("Market_Value_M")
+    top = filtered.Top_players(10, "Market_Value")
     fig = px.bar(
         top, x="Market_Value_M", y="Player", orientation="h",
         color="Position_Group", hover_data=["Club", "Age"],
         labels={"Market_Value_M": "Market value (€M)", "Position_Group": "Position"},
         title="Top 10 by market value",
     )
-    st.plotly_chart(fig, use_container_width=True)
+fig.update_layout(yaxis={"categoryorder": "total ascending"})  # sorts the bars by value
+fig.update_xaxes(range=[0, None])                              # axis starts at 0
+st.plotly_chart(fig, use_container_width=True)
 
 # ---------- Tab 2: who are these players? ----------
 with tab2:
@@ -80,8 +83,8 @@ with tab2:
         fig = px.histogram(filtered, x="Age", nbins=20, title="Age distribution")
         st.plotly_chart(fig, use_container_width=True)
     with col2:
-        counts = filtered["Position_Group"].value_counts().reset_index()
-        counts.columns = ["Position", "Players"]
+        counts = filtered.groupby("Position_Group").size().reset_index(name="Players")
+        fig = px.pie(counts, names="Position_Group", values="Players", title="Players by position")
         fig = px.pie(counts, names="Position", values="Players", title="Players by position")
         st.plotly_chart(fig, use_container_width=True)
 
@@ -109,6 +112,12 @@ with tab3:
         others.columns = ["Country", "Players"]
         fig = px.bar(others, x="Players", y="Country", orientation="h",
                      title="Second nationality of dual nationals")
+        others = pd.Series(filtered["Other_Nationality"]).str.split(", ").explode()
+        others = others[others != "None"]
+        countries = (others.groupby(others).size().nlargest(10).sort_values()
+             .rename_axis("Country").reset_index(name="Players"))
+        fig = px.bar(countries, x="Players", y="Country", orientation="h",
+             title="Second nationality of dual nationals")
         st.plotly_chart(fig, use_container_width=True)
 
 # ---------- Tab 4: full table ----------
